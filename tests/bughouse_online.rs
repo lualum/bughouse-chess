@@ -30,6 +30,7 @@ use bughouse_chess::piece::PieceKind;
 use bughouse_chess::player::{Faction, Team};
 use bughouse_chess::rules::{
     BughouseRules, ChessRules, DropAggression, MatchRules, PawnDropRanks, Promotion, Rules,
+    SharedReserves,
 };
 use bughouse_chess::scores::Scores;
 use bughouse_chess::server::{ServerInfo, ServerOptions};
@@ -55,6 +56,7 @@ fn default_chess_rules() -> ChessRules {
                 max: SubjectiveRow::from_one_based(6),
             },
             drop_aggression: DropAggression::NoChessMate,
+            shared_reserves: SharedReserves::Individual,
         }),
         ..ChessRules::chess_blitz_5()
     }

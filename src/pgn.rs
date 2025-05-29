@@ -22,7 +22,7 @@ use crate::player::Team;
 use crate::role::Role;
 use crate::rules::{
     BughouseRules, ChessRules, ChessVariant, DropAggression, FairyPieces, MatchRules,
-    PawnDropRanks, Promotion, Rules, StartingPosition,
+    PawnDropRanks, Promotion, Rules, SharedReserves, StartingPosition,
 };
 use crate::starter::EffectiveStartingPosition;
 use crate::utc_time::UtcDateTime;
@@ -498,6 +498,7 @@ fn make_bughouse_bpng_header(game: &BughouseGame, meta: BpgnMetadata) -> BpgnHea
     h.push_tag("Variant", variants.join(" "));
     h.push_tag("Promotion", game.bughouse_rules().promotion.to_pgn());
     h.push_tag("DropAggression", game.bughouse_rules().drop_aggression.to_pgn());
+    h.push_tag("SharedReserves", game.bughouse_rules().shared_reserves.to_pgn());
     h.push_tag("PawnDropRanks", game.bughouse_rules().pawn_drop_ranks.to_pgn());
     match game.chess_rules().starting_position {
         StartingPosition::Classic => {}
@@ -531,7 +532,7 @@ fn make_bughouse_bpng_header(game: &BughouseGame, meta: BpgnMetadata) -> BpgnHea
 //   - "Variant" - follow chess.com example;
 //   - "Outcome" - human-readable game result description; this is addition to "Result"
 //     and "Termination" fields, which follow PGN standard, but are less informative.
-//   - "Promotion", "DropAggression", "PawnDropRanks" - bughouse-specific rules.
+//   - "Promotion", "DropAggression", "SharedReserves", "PawnDropRanks" - bughouse-specific rules.
 pub fn export_to_bpgn(format: BpgnExportFormat, game: &BughouseGame, meta: BpgnMetadata) -> String {
     let header = make_bughouse_bpng_header(game, meta);
     let turns = game
@@ -624,6 +625,11 @@ fn parse_rules(tags: &TagMap) -> Result<Rules, String> {
         DropAggression::from_pgn,
         DropAggression::MateAllowed,
     )?;
+    let shared_reserves = tags.get_and_parse_or(
+        "SharedReserves",
+        SharedReserves::from_pgn,
+        SharedReserves::Individual,
+    )?;
     Ok(Rules {
         match_rules: MatchRules { rated, public },
         chess_rules: ChessRules {
@@ -639,6 +645,7 @@ fn parse_rules(tags: &TagMap) -> Result<Rules, String> {
                 promotion,
                 pawn_drop_ranks,
                 drop_aggression,
+                shared_reserves,
             }),
         },
     })
@@ -905,6 +912,7 @@ mod tests {
                 [Variant "Bughouse"]
                 [Promotion "Upgrade"]
                 [DropAggression "Mate allowed"]
+                [SharedReserves "Individual"]
                 [PawnDropRanks "2-7"]
                 [Result "0-1"]
                 [Termination "normal"]

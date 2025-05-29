@@ -1374,6 +1374,16 @@ fn update_match_list(matches: &[MatchDescription]) -> JsResult<()> {
                 ),
             )?;
         tr.new_child_element("th")?
+            .with_text_content("SR")
+            .with_plaintext_portal_tooltip(
+                Above,
+                Auto,
+                concat!(
+                    "Shared reseres:\nI — individual reserves (regular);\n",
+                    "S — shared reserves;"
+                ),
+            )?;
+        tr.new_child_element("th")?
             .with_text_content("Pr")
             .with_plaintext_portal_tooltip(
                 Above,
@@ -1409,6 +1419,10 @@ fn update_match_list(matches: &[MatchDescription]) -> JsResult<()> {
             DropAggression::NoBughouseMate => "NB",
             DropAggression::MateAllowed => "M",
         };
+        let shared_reserves = match bughouse_rules.shared_reserves {
+            SharedReserves::Individual => "I",
+            SharedReserves::Shared => "S",
+        };
         let promotion = match chess_rules.promotion() {
             Promotion::Discard => "D",
             Promotion::Upgrade => "Upg",
@@ -1428,6 +1442,7 @@ fn update_match_list(matches: &[MatchDescription]) -> JsResult<()> {
         tr.new_child_element("td")?
             .with_more_text(&bughouse_rules.pawn_drop_ranks.to_human_readable())?;
         tr.new_child_element("td")?.with_more_text(drop_aggression)?;
+        tr.new_child_element("td")?.with_more_text(shared_reserves)?;
         tr.new_child_element("td")?.with_more_text(promotion)?;
         {
             // TODO: Variant names tooltip.

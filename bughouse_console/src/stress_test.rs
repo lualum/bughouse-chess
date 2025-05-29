@@ -119,6 +119,11 @@ fn random_rules(rng: &mut rand::rngs::ThreadRng) -> Rules {
                         3 => DropAggression::MateAllowed,
                         _ => unreachable!(),
                     },
+                    shared_reserves: match rng.gen_range(0..2) {
+                        0 => SharedReserves::Individual,
+                        1 => SharedReserves::Shared,
+                        _ => unreachable!(),
+                    },
                 }),
             },
         };

@@ -29,6 +29,7 @@ const STARTING_TIME: &str = "starting_time";
 const PROMOTION: &str = "promotion";
 const PAWN_DROP_RANKS: &str = "pawn_drop_ranks";
 const DROP_AGGRESSION: &str = "drop_aggression";
+const SHARED_RESERVES: &str = "shared_reserves";
 
 const PLACEHOLDER_ICON: &str = r##"<svg class="rule-variant-icon"></svg>"##;
 
@@ -617,6 +618,24 @@ fn drop_aggression_mate_allowed_tooltip() -> JsResult<Vec<web_sys::Element>> {
     ])
 }
 
+fn shared_reserves_individual_tooltip() -> JsResult<Vec<web_sys::Element>> {
+    Ok(vec![
+        web_document()
+            .create_element("p")?
+            .with_more_text_i("Individual.")?
+            .with_more_text(" Each player gets their own reserve.")?,
+    ])
+}
+
+fn shared_reserves_shared_tooltip() -> JsResult<Vec<web_sys::Element>> {
+    Ok(vec![
+        web_document()
+            .create_element("p")?
+            .with_more_text_i("Shared.")?
+            .with_more_text(" Both players share the same reserve.")?,
+    ])
+}
+
 // Improvement potential: Update based on the current board shape.
 fn pawn_drop_rank_general_tooltip() -> JsResult<Vec<web_sys::Element>> {
     let first = web_document().create_element("p")?.with_more_text(
@@ -860,6 +879,19 @@ pub fn make_new_match_rules_body(server_options: &ServerOptions) -> JsResult<()>
             )?)?
             .to_elements()?,
     )?;
+    details_node.append_children(
+        RuleNode::new(SHARED_RESERVES, "Shared reserves")
+            .with_input_select([("individual", "Individual"), ("shared", "Shared")])?
+            .with_tooltip(combine_elements(
+                [
+                    shared_reserves_individual_tooltip()?,
+                    shared_reserves_shared_tooltip()?,
+                ]
+                .into_iter()
+                .flatten(),
+            )?)?
+            .to_elements()?,
+    )?;
     {
         let node = document.create_element("div")?.with_classes([
             "grid-col-span-2",
@@ -988,6 +1020,17 @@ pub fn make_readonly_rules_body(rules: &Rules) -> JsResult<web_sys::Element> {
             ));
         }
     }
+    if let Some(bughouse_rules) = rules.bughouse_rules() {
+        let shared_reserves_tooltip = match bughouse_rules.shared_reserves {
+            SharedReserves::Individual => shared_reserves_individual_tooltip()?,
+            SharedReserves::Shared => shared_reserves_shared_tooltip()?,
+        };
+        rule_rows.push((
+            "Shared reserves",
+            bughouse_rules.shared_reserves.to_human_readable().to_owned(),
+            Some(combine_elements(shared_reserves_tooltip)?),
+        ));
+    }
     for (caption, value, tooltip) in rule_rows {
         let tr = table.new_child_element("tr")?;
         {
@@ -1103,6 +1146,11 @@ pub fn new_match_rules() -> JsResult<Rules> {
         "mate-allowed" => DropAggression::MateAllowed,
         s => return Err(format!("Invalid drop aggression: {s}").into()),
     };
+    let shared_reserves = match details.get(SHARED_RESERVES).as_string().unwrap().as_str() {
+        "individual" => SharedReserves::Individual,
+        "shared" => SharedReserves::Shared,
+        s => return Err(format!("Invalid shared reserves: {s}").into()),
+    };
     let starting_time = details.get(STARTING_TIME).as_string().unwrap();
     let Some(starting_time) = duration_from_mss(&starting_time) else {
         return Err(format!("Invalid starting time: {starting_time}").into());
@@ -1135,6 +1183,7 @@ pub fn new_match_rules() -> JsResult<Rules> {
             promotion,
             pawn_drop_ranks,
             drop_aggression,
+            shared_reserves,
         }),
     };
     if chess_rules.regicide() {
@@ -1192,6 +1241,10 @@ fn new_match_apply_rules(rules: &ChessRules) -> JsResult<()> {
         DropAggression::NoChessMate => "no-chess-mate",
         DropAggression::NoBughouseMate => "no-bughouse-mate",
         DropAggression::MateAllowed => "mate-allowed",
+    })?;
+    set_select_value(SHARED_RESERVES, match bughouse_rules.shared_reserves {
+        SharedReserves::Individual => "individual",
+        SharedReserves::Shared => "shared",
     })?;
     set_input_value(STARTING_TIME, &duration_to_mss(rules.time_control.starting_time))?;
     set_input_value(PAWN_DROP_RANKS, &bughouse_rules.pawn_drop_ranks.to_pgn())?;

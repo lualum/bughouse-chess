@@ -88,6 +88,12 @@ pub enum DropAggression {
     MateAllowed,
 }
 
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
+pub enum SharedReserves {
+    Individual,
+    Shared,
+}
+
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub struct MatchRules {
     pub rated: bool,
@@ -184,6 +190,7 @@ pub struct BughouseRules {
     pub promotion: Promotion,
     pub pawn_drop_ranks: PawnDropRanks, // TODO: Update when board shape changes
     pub drop_aggression: DropAggression,
+    pub shared_reserves: SharedReserves,
 }
 
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
@@ -218,6 +225,7 @@ impl ChessRules {
             promotion: Promotion::Upgrade,
             pawn_drop_ranks: PawnDropRanks::from_one_based(2, 7),
             drop_aggression: DropAggression::MateAllowed,
+            shared_reserves: SharedReserves::Individual,
         };
         match preset {
             RulesPreset::International3 => Self {
@@ -236,6 +244,7 @@ impl ChessRules {
                     promotion: Promotion::Steal,
                     pawn_drop_ranks: PawnDropRanks::from_one_based(2, 6),
                     drop_aggression: DropAggression::NoChessMate,
+                    shared_reserves: SharedReserves::Individual,
                 }),
                 ..Self::chess_blitz_5()
             },
@@ -398,6 +407,23 @@ impl DropAggression {
             "No chess mate" => Ok(DropAggression::NoChessMate),
             "No bughouse mate" => Ok(DropAggression::NoBughouseMate),
             "Mate allowed" => Ok(DropAggression::MateAllowed),
+            _ => Err(()),
+        }
+    }
+    pub fn to_human_readable(&self) -> &'static str { self.to_pgn() }
+}
+
+impl SharedReserves {
+    pub fn to_pgn(&self) -> &'static str {
+        match self {
+            SharedReserves::Individual => "Individual",
+            SharedReserves::Shared => "Shared",
+        }
+    }
+    pub fn from_pgn(s: &str) -> Result<Self, ()> {
+        match s {
+            "Individual" => Ok(SharedReserves::Individual),
+            "Shared" => Ok(SharedReserves::Shared),
             _ => Err(()),
         }
     }
