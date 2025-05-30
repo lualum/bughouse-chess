@@ -219,6 +219,7 @@ pub fn shredder_fen_to_board(rules: &ChessRules, fen: &str) -> Result<BoardSetup
                 let force = piece_force.try_into().map_err(|_| {
                     format!("invalid FEN: unexpected neutral reserve piece: {piece}")
                 })?;
+                // FLAGGED
                 reserves[force][kind] += 1;
             } else {
                 return Err(format!("invalid FEN: unknown reserve piece: {piece}"));

@@ -1248,6 +1248,7 @@ impl Board {
             // TODO: Properly record negative reserve pieces for virtual turns.
             let reserve_left = &mut self.reserves[force][piece_kind];
             if *reserve_left > 0 {
+                // FLAGGED
                 *reserve_left -= 1;
             } else {
                 match mode {
@@ -1779,6 +1780,7 @@ impl Board {
             assert!(capture.piece_kind.reservable(self.chess_rules()) != PieceReservable::Never);
             // Unwrap ok: duck cannot be captured.
             let force: Force = capture.force.try_into().unwrap();
+            // FLAGGED
             self.reserves[force.opponent()][capture.piece_kind] += 1;
         }
     }
@@ -1789,6 +1791,7 @@ impl Board {
             assert!(capture.piece_kind.reservable(self.chess_rules()) != PieceReservable::Never);
             // Unwrap ok: duck cannot be captured.
             let force = capture.force.try_into().unwrap();
+            // FLAGGED
             self.reserves[force][capture.piece_kind] += 1;
         }
         for steal in &facts.steals {
